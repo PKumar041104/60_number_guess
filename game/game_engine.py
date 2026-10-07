@@ -15,6 +15,9 @@ class GameEngine:
         self.min_range = 1
         self.max_range = 100
 
+        # Recent guess history
+        self.guess_history = []
+
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
         self.game_won = False
@@ -24,6 +27,7 @@ class GameEngine:
 
         self.font_title = pygame.font.SysFont(None, 42)
         self.font_medium = pygame.font.SysFont(None, 28)
+        self.font_small = pygame.font.SysFont(None, 24)
         self.font_btn = pygame.font.SysFont(None, 26)
 
     def submit_guess(self):
@@ -48,6 +52,11 @@ class GameEngine:
             # The secret number must be greater than the guess.
             self.min_range = max(self.min_range, guess + 1)
 
+            # Add guess to history.
+            self.guess_history.append(
+                (guess, "TOO LOW", (80, 160, 240))
+            )
+
         elif guess > self.secret_number:
             self.feedback_msg = f"TOO HIGH! (Guess was {guess})"
             self.feedback_color = (240, 100, 80)
@@ -55,18 +64,31 @@ class GameEngine:
             # The secret number must be smaller than the guess.
             self.max_range = min(self.max_range, guess - 1)
 
+            # Add guess to history.
+            self.guess_history.append(
+                (guess, "TOO HIGH", (240, 100, 80))
+            )
+
         else:
             self.feedback_msg = f"CORRECT! Found in {self.attempts} attempts."
             self.feedback_color = (80, 220, 90)
             self.game_won = True
 
+            # Add correct guess to history.
+            self.guess_history.append(
+                (guess, "CORRECT", (80, 220, 90))
+            )
+
     def reset(self):
         self.secret_number = random.randint(1, 100)
         self.attempts = 0
 
-        # Reset the dynamic range for a new game.
+        # Reset the dynamic range.
         self.min_range = 1
         self.max_range = 100
+
+        # Reset guess history.
+        self.guess_history = []
 
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
@@ -181,6 +203,43 @@ class GameEngine:
             )
         )
 
+        # Display recent guess history.
+        history_title = self.font_medium.render(
+            "Recent Guesses",
+            True,
+            (245, 245, 245)
+        )
+
+        screen.blit(
+            history_title,
+            (
+                self.width // 2 - history_title.get_width() // 2,
+                315
+            )
+        )
+
+        # Show the most recent five guesses.
+        recent_guesses = self.guess_history[-5:]
+
+        start_y = 350
+
+        for index, (guess, result, color) in enumerate(recent_guesses):
+            history_text = f"{guess}  →  {result}"
+
+            history_surf = self.font_small.render(
+                history_text,
+                True,
+                color
+            )
+
+            screen.blit(
+                history_surf,
+                (
+                    self.width // 2 - history_surf.get_width() // 2,
+                    start_y + index * 27
+                )
+            )
+
         if self.game_won:
             restart_surf = self.font_medium.render(
                 "Press [R] to Start a New Game",
@@ -192,6 +251,6 @@ class GameEngine:
                 restart_surf,
                 (
                     self.width // 2 - restart_surf.get_width() // 2,
-                    315
+                    start_y + len(recent_guesses) * 27 + 20
                 )
             )

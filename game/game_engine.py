@@ -8,7 +8,13 @@ class GameEngine:
         self.width = width
         self.height = height
         self.secret_number = random.randint(1, 100)
+
         self.attempts = 0
+
+        # Dynamic search range
+        self.min_range = 1
+        self.max_range = 100
+
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
         self.game_won = False
@@ -39,9 +45,15 @@ class GameEngine:
             self.feedback_msg = f"TOO LOW! (Guess was {guess})"
             self.feedback_color = (80, 160, 240)
 
+            # The secret number must be greater than the guess.
+            self.min_range = max(self.min_range, guess + 1)
+
         elif guess > self.secret_number:
             self.feedback_msg = f"TOO HIGH! (Guess was {guess})"
             self.feedback_color = (240, 100, 80)
+
+            # The secret number must be smaller than the guess.
+            self.max_range = min(self.max_range, guess - 1)
 
         else:
             self.feedback_msg = f"CORRECT! Found in {self.attempts} attempts."
@@ -51,6 +63,11 @@ class GameEngine:
     def reset(self):
         self.secret_number = random.randint(1, 100)
         self.attempts = 0
+
+        # Reset the dynamic range for a new game.
+        self.min_range = 1
+        self.max_range = 100
+
         self.feedback_msg = "Enter a number between 1 and 100"
         self.feedback_color = (220, 220, 220)
         self.game_won = False
@@ -81,6 +98,7 @@ class GameEngine:
             True,
             (245, 245, 245)
         )
+
         screen.blit(
             title_surf,
             (
@@ -94,6 +112,7 @@ class GameEngine:
             True,
             (180, 185, 195)
         )
+
         screen.blit(
             attempts_surf,
             (
@@ -147,6 +166,21 @@ class GameEngine:
             )
         )
 
+        # Display the current valid search range.
+        range_surf = self.font_medium.render(
+            f"Valid Range: {self.min_range} - {self.max_range}",
+            True,
+            (200, 205, 215)
+        )
+
+        screen.blit(
+            range_surf,
+            (
+                self.width // 2 - range_surf.get_width() // 2,
+                275
+            )
+        )
+
         if self.game_won:
             restart_surf = self.font_medium.render(
                 "Press [R] to Start a New Game",
@@ -158,6 +192,6 @@ class GameEngine:
                 restart_surf,
                 (
                     self.width // 2 - restart_surf.get_width() // 2,
-                    295
+                    315
                 )
             )
